@@ -12,7 +12,7 @@ namespace Frootify
     /// </summary>
     public partial class CreatePlaylistWindow : Window
     {
-        private const string _default_img = "https://res.cloudinary.com/dcogdkkwa/image/upload/v1700703597/xorhko3yu3hs54eljeg9.jpg";
+        private const string _default_img = "https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image-300x225.png";
         private string? _imagePath;
         private string[]? _selectedSongs;
         private List<string>? _selectedSongFileNames { get; set; }
