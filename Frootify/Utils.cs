@@ -25,7 +25,7 @@ namespace Frootify
         {
             try
             {
-                var myAccount = new Account { ApiKey = Decode("NDkxMjU2MTYzODg1NjI3"), ApiSecret = Decode("MktlUUhwck9ydi1kZm1tM1VNcVVPS0V1bzV3"), Cloud = Decode("ZGNvZ2Rra3dh") };
+                var myAccount = new Account { ApiKey = Decode("YOUR_API_KEY"), ApiSecret = Decode("YOUR_API_SECRET"), Cloud = Decode("YOUR_CLOUD") };
 
                 Cloudinary cloudinary = new Cloudinary(myAccount);
 
