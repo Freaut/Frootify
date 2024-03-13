@@ -72,7 +72,7 @@ namespace Frootify
                 Console.WriteLine($"Error reading file: {ex.Message}");
                 Duration = TimeSpan.Zero;
             }
-            Image = new BitmapImage(new Uri("https://media.discordapp.net/attachments/1130259258705969152/1172333204431196181/93457970588ac31c0d4e06f41469f003.jpg", UriKind.RelativeOrAbsolute));
+            Image = new BitmapImage(new Uri("https://storage.googleapis.com/proudcity/mebanenc/uploads/2021/03/placeholder-image-300x225.png", UriKind.RelativeOrAbsolute));
         }
     }
 }
