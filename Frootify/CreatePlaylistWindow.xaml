@@ -1,0 +1,82 @@
+﻿<Window x:Class="Frootify.CreatePlaylistWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Frootify"
+        mc:Ignorable="d"
+        Title="Create Playlist"
+        Height="350"
+        Width="450"
+        Background="#121212">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="250"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Margin="10" Grid.Column="0">
+            <Label
+                Content="Playlist Name"
+                FontSize="15"
+                FontWeight="Bold"
+                FontStyle="Italic"
+                Foreground="#d4d2d2"
+                BorderThickness="0"/>
+            <TextBox
+                x:Name="PlaylistNameTextBox"
+                Height="25"
+                Margin="0,0,0,5"
+                Background="#1a1a1a"
+                Foreground="#d4d2d2"/>
+
+            <Label 
+                Content="Playlist Description"
+                FontSize="15"
+                FontWeight="Bold"
+                FontStyle="Italic"
+                Foreground="#d4d2d2"
+                BorderThickness="0"/>
+            <TextBox
+                x:Name="PlaylistDescriptionTextBox"
+                Margin="0,0,0,5"
+                Height="100"
+                TextWrapping="Wrap"
+                AcceptsReturn="True"
+                Background="#1a1a1a"
+                Foreground="#d4d2d2"/>
+
+            <Button 
+                Content="Select Image"
+                FontSize="15"
+                FontWeight="Bold"
+                Click="SelectImage_Click"
+                Foreground="#d4d2d2"
+                Background="#1a1a1a"/>
+
+            <Button
+                Content="Add Songs"
+                FontSize="15"
+                FontWeight="Bold"
+                Click="AddSongs_Click"
+                Foreground="#d4d2d2"
+                Background="#1a1a1a"/>
+
+            <Button
+                Content="Create Playlist"
+                FontSize="15"
+                FontWeight="Bold"
+                Click="CreatePlaylist_Click"
+                Foreground="#d4d2d2"
+                Background="#1a1a1a"/>
+        </StackPanel>
+
+        <ListBox x:Name="SelectedSongsListBox" Grid.Column="1" VerticalAlignment="Top" Margin="10" Background="#1a1a1a">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" Margin="0,0,0,5" Foreground="#d4d2d2"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</Window>
