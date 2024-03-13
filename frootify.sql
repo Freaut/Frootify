@@ -36,13 +36,6 @@ CREATE TABLE `playlists` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
--- Dumpning av Data i tabell `playlists`
---
-
-INSERT INTO `playlists` (`Id`, `Name`, `Description`, `Image`, `Songs`) VALUES
-(4, 'ELD WALLA', '', 'https://res.cloudinary.com/dcogdkkwa/image/upload/v1700783218/nnqcxyu577txkse67ayq.jpg', 'WyJDOlxcVXNlcnNcXHRoZWdhXFxEb3dubG9hZHNcXG1vc2ljXFxEanVuZ2VsdHJ1YmFkdXJlbiBhbGxhIGxcdTAwRTV0YXIubXAzLm1wMyIsIkM6XFxVc2Vyc1xcdGhlZ2FcXERvd25sb2Fkc1xcbW9zaWNcXFNUQVJTRVQgIEVBUlRIUklTRS5tcDMiLCJDOlxcVXNlcnNcXHRoZWdhXFxEb3dubG9hZHNcXG1vc2ljXFxCb3lXaXRoVWtlIGZ0IGJsYWNrYmVhciAgSURHQUYgT2ZmaWNpYWwgTXVzaWMgVmlkZW8ubXAzIiwiQzpcXFVzZXJzXFx0aGVnYVxcRG93bmxvYWRzXFxtb3NpY1xcQm95V2l0aFVrZSAgTG9hZmVycyBPZmZpY2lhbCBMeXJpYyBWaWRlby5tcDMiXQ==');
-
---
 -- Index för dumpade tabeller
 --
 
