@@ -4600,6 +4600,7 @@
       "CloudinaryDotNet >= 1.23.0",
       "MySql.Data >= 8.2.0",
       "NAudio >= 2.2.1",
+      "Newtonsoft.Json >= 13.0.3",
       "TagLibSharp >= 2.3.0"
     ]
   },
@@ -4658,6 +4659,10 @@
           "NAudio": {
             "target": "Package",
             "version": "[2.2.1, )"
+          },
+          "Newtonsoft.Json": {
+            "target": "Package",
+            "version": "[13.0.3, )"
           },
           "TagLibSharp": {
             "target": "Package",

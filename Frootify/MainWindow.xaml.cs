@@ -11,12 +11,15 @@ using System.Windows.Media.Imaging;
 using System.Drawing;
 using System.Windows.Media;
 using System.Linq;
+using MySql.Data.MySqlClient;
 
 namespace Frootify
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
+    /// 
+
     public partial class MainWindow : Window
     {
 
@@ -37,6 +40,10 @@ namespace Frootify
         #endregion
 
         #region Variables
+
+        public static bool USEJSON = true;
+        
+        private const string _connectionString = "Datasource=127.0.0.1;username=root;password=;database=Frootify;";
 
         private AudioPlayer _audioPlayer;
         private float _volume;
@@ -158,6 +165,19 @@ namespace Frootify
 
             #endregion
 
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(_connectionString))
+                {
+                    connection.Open();
+                    USEJSON = false;
+                }
+            }
+            catch
+            {
+                USEJSON = true;
+            }
+
         }
 
         #region Update Loop
@@ -170,6 +190,11 @@ namespace Frootify
 
                 if (SelectedSong == null)
                     return;
+
+                if (_songTime > SelectedSong.Duration)
+                {
+                    SelectNextSong();
+                }
 
                 double percentageElapsed = (_songTime.TotalSeconds / SelectedSong.Duration.TotalSeconds) * 100;
                 Application.Current.Dispatcher.Invoke(() =>
@@ -186,8 +211,7 @@ namespace Frootify
             // Budget fix deluxe
             Application.Current.Dispatcher.Invoke(() =>
             {
-                BitmapImage newImage = _audioPlayer.isPlaying ? _biPause : _biPlay;
-                PlayPauseImage.Source = newImage;
+                PlayPauseImage.Source = _audioPlayer.isPlaying ? _biPause : _biPlay;
             });
         }
 
@@ -269,7 +293,22 @@ namespace Frootify
                 foreach (string filePath in selectedFiles)
                     _clickedPlaylist.Songs.Add(new Song(filePath));
 
-                SQL.Update(_clickedPlaylist);
+                if (USEJSON)
+                {
+                    JSONHelper.Update(_clickedPlaylist);
+                }
+                else
+                {
+                    try
+                    {
+                        SQL.Update(_clickedPlaylist);
+                    }
+                    catch
+                    {
+                        JSONHelper.Update(_clickedPlaylist);
+                    }
+                }
+
                 LoadPlaylists();
                 SelectedPlaylist = _playlists.Find(x => x.Id == SelectedPlaylist.Id);
                 UpdateSongsListBox();
@@ -285,7 +324,22 @@ namespace Frootify
             if (_clickedPlaylist == null)
                 return;
 
-            SQL.Delete(_clickedPlaylist);
+            if (USEJSON)
+            {
+                JSONHelper.Delete(_clickedPlaylist);
+            }
+            else
+            {
+                try
+                {
+                    SQL.Delete(_clickedPlaylist);
+                }
+                catch
+                {
+                    JSONHelper.Delete(_clickedPlaylist);
+                }
+            }
+
             _clickedPlaylist = null;
             LoadPlaylists();
 
@@ -323,7 +377,15 @@ namespace Frootify
             SelectedPlaylist.Songs.Remove(_clickedSong);
             _clickedSong = null;
 
-            SQL.Update(SelectedPlaylist);
+            try
+            {
+                SQL.Update(SelectedPlaylist);
+            }
+            catch
+            {
+                JSONHelper.Update(SelectedPlaylist);
+            }
+
             LoadPlaylists();
         }
 
@@ -355,20 +417,22 @@ namespace Frootify
             }
 
             // Queue second priority
-            if (_queue.Count > 1)
+            if (_queue.Count > 0)
             {
                 if (SelectedSong == _queue.First())
                 {
                     _songTime = TimeSpan.FromSeconds(0);
                     _audioPlayer.Skip(0);
-                    _queue.Remove(SelectedSong);
+                    _queue.RemoveAt(0);
                     return;
                 }
-
-                SelectedSong = _queue.FirstOrDefault();
-                PlaySelectedSong(SelectedSong.Directory, true);
-                _queue.RemoveAt(0);
-                return;
+                else
+                {
+                    SelectedSong = _queue.FirstOrDefault();
+                    PlaySelectedSong(SelectedSong.Directory, true);
+                    _queue.RemoveAt(0);
+                    return;
+                }
             }
 
             if (SelectedPlaylist == null)
@@ -462,7 +526,22 @@ namespace Frootify
             {
                 try
                 {
-                    PlaySelectedSong(SelectedSong.Directory);
+                    if (_audioPlayer.isPlaying)
+                    {
+                        // Debug.WriteLine("Pause");
+                        _audioPlayer.Pause();
+                    }
+                    else if (_audioPlayer.isPaused)
+                    {
+                        // Debug.WriteLine("Resume");
+                        _audioPlayer.Resume();
+                    }
+                    else // Should really never be happening
+                    {
+                        // Debug.WriteLine("Else");
+                        _audioPlayer.Play(SelectedSong.Directory);
+                        _songTime = TimeSpan.Zero;
+                    }
                 }
                 catch { }
             }
@@ -495,7 +574,22 @@ namespace Frootify
 
         private void LoadPlaylists()
         {
-            _playlists = SQL.Fetch();
+            if (USEJSON)
+            {
+                _playlists = JSONHelper.Fetch();
+            }
+            else
+            {
+                try
+                {
+                    _playlists = SQL.Fetch();
+                }
+                catch
+                {
+                    _playlists = JSONHelper.Fetch();
+                }
+            }
+
             PlaylistListBox.ItemsSource = _playlists;
         }
 
@@ -611,23 +705,6 @@ namespace Frootify
                 _audioPlayer.Play(filePath);
                 _songTime = TimeSpan.Zero;
                 return;
-            }
-
-            if (_audioPlayer.isPlaying)
-            {
-                // Debug.WriteLine("Pause");
-                _audioPlayer.Pause();
-            }
-            else if (_audioPlayer.isPaused)
-            {
-                // Debug.WriteLine("Resume");
-                _audioPlayer.Resume();
-            }
-            else // Should really never be happening
-            {
-                // Debug.WriteLine("Else");
-                _audioPlayer.Play(filePath);
-                _songTime = TimeSpan.Zero;
             }
         }
 

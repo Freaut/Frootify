@@ -83,7 +83,22 @@ namespace Frootify
             string desc = PlaylistDescriptionTextBox.Text;
             string finalimg = string.IsNullOrEmpty(url) ? _default_img : url;
 
-            SQL.CreatePlaylist(name, desc, finalimg, songs);
+            if (MainWindow.USEJSON)
+            {
+                JSONHelper.CreatePlaylist(name, desc, finalimg, songs);
+            }
+            else
+            {
+                try
+                {
+                    SQL.CreatePlaylist(name, desc, finalimg, songs);
+                }
+                catch
+                {
+                    JSONHelper.CreatePlaylist(name, desc, finalimg, songs);
+                }
+            }
+
             PlaylistAddedEvent?.Invoke(this, new Playlist(0, name, desc, finalimg, songs));
             this.Close();
         }
