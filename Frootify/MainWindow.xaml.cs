@@ -45,21 +45,21 @@ namespace Frootify
         
         private const string _connectionString = "Datasource=127.0.0.1;username=root;password=;database=Frootify;";
 
-        private AudioPlayer _audioPlayer;
+        public AudioPlayer _audioPlayer;
         private float _volume;
         private Thread _updateThread;
         private MouseButton _lastClickedButton_Playlists;
         private MouseButton _lastClickedButton_Song;
 
-        private System.Drawing.Bitmap _previousimg  = Properties.Resources.previous;
-        private System.Drawing.Bitmap _skipimg      = Properties.Resources.skip;
+        public static System.Drawing.Bitmap _previousimg  = Properties.Resources.previous;
+        public static System.Drawing.Bitmap _skipimg      = Properties.Resources.skip;
         
-        private BitmapImage _biPlay                 = Utils.ConvertBitmapToBitmapImage(Properties.Resources.play);
-        private BitmapImage _biPause                = Utils.ConvertBitmapToBitmapImage(Properties.Resources.pause);
-        private BitmapImage _shuffleImage           = Utils.ConvertBitmapToBitmapImage(Properties.Resources.shuffle);
-        private BitmapImage _shuffleImage_selected  = Utils.ConvertBitmapToBitmapImage(Properties.Resources.shuffle_selected);
-        private BitmapImage _repeatImage            = Utils.ConvertBitmapToBitmapImage(Properties.Resources.repeat);
-        private BitmapImage _repeatImage_selected   = Utils.ConvertBitmapToBitmapImage(Properties.Resources.repeat_selected);
+        public static BitmapImage _biPlay                 = Utils.ConvertBitmapToBitmapImage(Properties.Resources.play);
+        public static BitmapImage _biPause                = Utils.ConvertBitmapToBitmapImage(Properties.Resources.pause);
+        public static BitmapImage _shuffleImage           = Utils.ConvertBitmapToBitmapImage(Properties.Resources.shuffle);
+        public static BitmapImage _shuffleImage_selected  = Utils.ConvertBitmapToBitmapImage(Properties.Resources.shuffle_selected);
+        public static BitmapImage _repeatImage            = Utils.ConvertBitmapToBitmapImage(Properties.Resources.repeat);
+        public static BitmapImage _repeatImage_selected   = Utils.ConvertBitmapToBitmapImage(Properties.Resources.repeat_selected);
         
         private Playlist? SelectedPlaylist { get; set; }
         private Song? SelectedSong { get; set; }
@@ -82,17 +82,22 @@ namespace Frootify
         public MainWindow()
         {
             InitializeComponent();
-            LoadPlaylists();
 
             #region Playlist Listbox Contextmenu
 
             ContextMenu contextMenu = new ContextMenu();
             MenuItem addSongsMenuItem = new MenuItem { Header = "Add Songs" };
             MenuItem deletePlaylistMenuItem = new MenuItem { Header = "Delete Playlist" };
+
+            MenuItem changeOutputDevice = new MenuItem { Header = "Configure Output Device" };
+
             addSongsMenuItem.Click += MenuItem_AddSongs_Click;
             deletePlaylistMenuItem.Click += MenuItem_DeletePlaylist_Click;
+            changeOutputDevice.Click += ConfigureOutputDevice_Click;
+
             contextMenu.Items.Add(addSongsMenuItem);
             contextMenu.Items.Add(deletePlaylistMenuItem);
+            contextMenu.Items.Add(changeOutputDevice);
             PlaylistListBox.ContextMenu = contextMenu;
             PlaylistListBox.PreviewMouseRightButtonDown += PlaylistListBox_PreviewMouseRightButtonDown;
 
@@ -109,6 +114,7 @@ namespace Frootify
 
             songs_contextMenu.Items.Add(queueSongMenuItem);
             songs_contextMenu.Items.Add(removeSongMenuItem);
+            //songs_contextMenu.Items.Add(changeOutputDevice);
             SongsListBox.ContextMenu = songs_contextMenu;
             SongsListBox.PreviewMouseRightButtonDown += SongsListBox_PreviewMouseRightButtonDown;
 
@@ -176,8 +182,17 @@ namespace Frootify
             catch
             {
                 USEJSON = true;
+
             }
 
+            LoadPlaylists();
+        }
+
+        private void ShowNotification(Notification notification)
+        {
+            WPFNotification notificationWindow = new WPFNotification(notification, this);
+            notificationWindow.Owner = this;
+            notificationWindow.Show();
         }
 
         #region Update Loop
@@ -270,6 +285,31 @@ namespace Frootify
         }
 
         #endregion
+
+        public void ChangeOutputDevice(DevicePair selectedDevice)
+        {
+            _audioPlayer.Terminate();
+
+            _audioPlayer = new AudioPlayer(_volume, selectedDevice.Index);
+            _audioPlayer.SetVolume(_volume / 100.0f);
+
+            if (SelectedSong != null || _audioPlayer.isPlaying)
+            {
+                _audioPlayer.Pause();
+                PlaySelectedSong(SelectedSong.Directory, true);
+                _audioPlayer.Skip(_songTime.TotalSeconds);
+                _audioPlayer.Resume();
+            }
+        }
+
+        private void ConfigureOutputDevice_Click(object sender, RoutedEventArgs e)
+        {
+            List<DevicePair> devices = _audioPlayer.GetDevices();
+
+            Options options = new Options(_audioPlayer, this);
+            options.Owner = this;
+            options.Show();
+        }
 
         #region Add Songs To Playlist
 
@@ -410,8 +450,7 @@ namespace Frootify
             {
                 if (SelectedSong != null)
                 {
-                    _songTime = TimeSpan.FromSeconds(0);
-                    _audioPlayer.Skip(0);
+                    RestartSong();
                     return;
                 }
             }
@@ -421,8 +460,7 @@ namespace Frootify
             {
                 if (SelectedSong == _queue.First())
                 {
-                    _songTime = TimeSpan.FromSeconds(0);
-                    _audioPlayer.Skip(0);
+                    RestartSong();
                     _queue.RemoveAt(0);
                     return;
                 }
@@ -479,9 +517,22 @@ namespace Frootify
 
         #endregion
 
+        private void RestartSong()
+        {
+            _songTime = TimeSpan.FromSeconds(0);
+            _audioPlayer.Skip(0);
+
+            ShowNotification(new Notification
+            {
+                Title = "Now Playing",
+                Message = $"{SelectedSong.Title} - {SelectedSong.Artist}",
+                Image = _playlists.First()._imgpath
+            });
+        }
+
         #region Skipping songs
 
-        private void SkipForward_Click(object sender, RoutedEventArgs e)
+        public void SkipForward()
         {
             try
             {
@@ -490,14 +541,13 @@ namespace Frootify
             catch { }
         }
 
-        private void SkipBackward_Click(object sender, RoutedEventArgs e)
+        public void SkipBackward()
         {
             try
             {
                 if (_songTime.TotalSeconds > 10)
                 {
-                    _songTime = TimeSpan.FromSeconds(0);
-                    _audioPlayer.Skip(0);
+                    RestartSong();
                     return;
                 }
 
@@ -516,11 +566,21 @@ namespace Frootify
             catch { }
         }
 
+        private void SkipForward_Click(object sender, RoutedEventArgs e)
+        {
+            SkipForward();
+        }
+
+        private void SkipBackward_Click(object sender, RoutedEventArgs e)
+        {
+            SkipBackward();
+        }
+
         #endregion
 
         #region PlayPause Button
 
-        private void PlayPauseButton_Click(object sender, RoutedEventArgs e)
+        public void PlayPause()
         {
             if (SelectedSong != null)
             {
@@ -545,6 +605,12 @@ namespace Frootify
                 }
                 catch { }
             }
+
+        }
+
+        private void PlayPauseButton_Click(object sender, RoutedEventArgs e)
+        {
+            PlayPause();
         }
 
         #endregion
@@ -643,8 +709,8 @@ namespace Frootify
             Song? selectedSong = SongsListBox.SelectedItem as Song;
             if (selectedSong != null)
             {
-                PlaySelectedSong(selectedSong.Directory, true);
                 SelectedSong = selectedSong;
+                PlaySelectedSong(selectedSong.Directory, true);
                 CurrentSong.Text = SelectedSong.Title;
             }
             else if (SelectedSong != null)
@@ -704,6 +770,17 @@ namespace Frootify
                 // Debug.WriteLine("Click");
                 _audioPlayer.Play(filePath);
                 _songTime = TimeSpan.Zero;
+
+                if (SelectedSong != null)
+                {
+                    ShowNotification(new Notification
+                    {
+                        Title = "Now Playing",
+                        Message = $"{SelectedSong.Title} - {SelectedSong.Artist}",
+                        Image = _playlists.First()._imgpath
+                    });
+                }
+
                 return;
             }
         }

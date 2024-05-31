@@ -1,7 +1,11 @@
-﻿using NAudio.Wave;
+﻿using NAudio.MediaFoundation;
+using NAudio.Wave;
 using System;
+using System.Collections;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace Frootify
 {
@@ -16,17 +20,39 @@ namespace Frootify
         private string _loaded_file_path = string.Empty;
         private string _current_file_path = string.Empty;
         public static event EventHandler<string>? SongFinishedEvent;
+        public static string SelectedSpeaker { get; set; }
+        public static int SelectedSpeakerIndex { get; set; }
+        private bool KillThread = false;
+        
+        public List<DevicePair> Devices { get; set; }
 
-        public AudioPlayer(float volume)
+        public AudioPlayer(float volume, int devicenumber = -1)
         {
-            outputDevice = new WaveOutEvent();
+            Devices = new List<DevicePair>();
+            outputDevice = new WaveOutEvent() { DeviceNumber = devicenumber };
             isPlaying = false;
             isPaused = false;
             _volume = volume;
+            KillThread = false;
+
+            // NAudio.Wave.DirectSoundOut.Devices.
+
+            Debug.WriteLine($"Default: {WaveOut.GetCapabilities(outputDevice.DeviceNumber).ProductName}");
+
+            try
+            {
+                for (int idx = 0; idx <= NAudio.Wave.WaveOut.DeviceCount; idx++)
+                {
+                    string devName = NAudio.Wave.WaveOut.GetCapabilities(idx).ProductName;
+                    // Debug.WriteLine(devName);
+                    Devices.Add(new DevicePair(idx, devName));
+                }
+            }
+            catch { }
 
             audioThread = new Thread(() =>
             {
-                while (true)
+                while (!KillThread)
                 {
                     try
                     {
@@ -36,6 +62,20 @@ namespace Frootify
                 }
             });
             audioThread.Start();
+        }
+
+        public List<DevicePair> GetDevices()
+        {
+            List<DevicePair> temp = new List<DevicePair>();
+
+            for (int i = 0; i < WaveOut.DeviceCount; i++)
+            {
+                var capabilities = WaveOut.GetCapabilities(i);
+                temp.Add(new DevicePair(i, capabilities.ProductName));
+                Debug.WriteLine(capabilities.ProductName);
+            }
+
+            return temp;
         }
 
         ~AudioPlayer()
@@ -48,9 +88,13 @@ namespace Frootify
             try
             {
                 // audioThread.Suspend();
+                KillThread = true;
                 outputDevice.Stop();
                 outputDevice.Dispose();
                 audioFile?.Dispose();
+                audioFile = null;
+                audioThread.Abort();
+                audioThread.Suspend();
             }
             catch { }
         }

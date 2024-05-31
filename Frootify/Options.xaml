@@ -1,0 +1,52 @@
+﻿<Window x:Class="Frootify.Options"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Options" Height="400" Width="600"
+        Background="#1a1a1a" Foreground="DodgerBlue"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <!-- Style for ListBox Menu Items -->
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="DodgerBlue"/>
+            <Setter Property="Background" Value="#1a1a1a"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="DodgerBlue"/>
+                    <Setter Property="Foreground" Value="#1a1a1a"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Style for ListBox Menu -->
+        <Style TargetType="ListBox">
+            <Setter Property="Background" Value="#1a1a1a"/>
+            <Setter Property="BorderBrush" Value="DodgerBlue"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left-hand side menu -->
+        <ListBox x:Name="MenuListBox" 
+                 SelectionChanged="MenuListBox_SelectionChanged"
+                 SelectedIndex="0">
+            <ListBoxItem Content="Audio Devices"/>
+            <ListBoxItem Content="Other Settings"/>
+            <!-- Add more menu items here -->
+        </ListBox>
+
+        <!-- Main content area -->
+        <ContentControl Grid.Column="1" x:Name="MainContentControl" Background="#121212"/>
+    </Grid>
+</Window>

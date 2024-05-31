@@ -1,0 +1,56 @@
+﻿<Window x:Class="Frootify.WPFNotification"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Notification"
+        Width="350" Height="130"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        Loaded="Window_Loaded">
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="Window.Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1.0" To="0.0" Duration="0:0:1" BeginTime="0:0:3" Completed="FadeOutCompleted"/>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Window.Triggers>
+    <Border Background="#121212" CornerRadius="10" BorderThickness="0" 
+            Margin="10" Padding="10" Opacity="0.9">
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="0" />
+        </Border.Effect>
+        <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Horizontal">
+                <Border Width="40" Height="40" CornerRadius="20" Margin="10">
+                    <Image Source="{Binding Image}" Stretch="Fill" />
+                </Border>
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Width="250">
+                    <TextBlock Text="{Binding Title}" 
+                               FontWeight="Bold" Foreground="DodgerBlue" FontSize="14"/>
+                    <TextBlock Text="{Binding Message}" 
+                               Foreground="White" FontSize="12" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Content="X" Width="30" Height="30" 
+                        HorizontalAlignment="Right" VerticalAlignment="Top" 
+                        Background="DodgerBlue" BorderBrush="Transparent" 
+                        Foreground="White" FontSize="14" FontWeight="Bold"
+                        Click="OkButton_Click"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,00,0,0">
+                <Button x:Name="PreviousButton" Width="Auto" Height="25" Background="Transparent" BorderThickness="0" Margin="0,0,2,0" Click="SkipBackward_Click">
+                    <Image x:Name="PreviousImage"/>
+                </Button>
+                <Button x:Name="PlayPauseButton" Width="Auto" Height="25" Background="Transparent" BorderThickness="0" Click="PlayPauseButton_Click">
+                    <Image x:Name="PlayPauseImage"/>
+                </Button>
+                <Button x:Name="SkipButton" Width="Auto" Height="25" Background="Transparent" BorderThickness="0" Margin="2,0,0,0" Click="SkipForward_Click">
+                    <Image x:Name="SkipImage"/>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

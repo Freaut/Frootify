@@ -7,15 +7,39 @@
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
+    <Compile Update="AudioDevicesUserControl.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="CreatePlaylistWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Options.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="OtherSettingsUserControl.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="WPFNotification.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Page Update="AudioDevicesUserControl.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="CreatePlaylistWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="MainWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Options.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="OtherSettingsUserControl.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="WPFNotification.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
