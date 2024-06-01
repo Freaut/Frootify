@@ -1,25 +1,32 @@
 ﻿using Org.BouncyCastle.Crypto.Operators;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Security.Policy;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Animation;
 using static System.Windows.Forms.Design.AxImporter;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace Frootify.PluginSystem
 {
     /// <summary>
-    /// Example plugin that subscribes to the built in events
+    /// Example plugin to keep track of song stats
     /// </summary>
+
+    [Plugin]
     public class ExamplePlugin : PluginBase
     {
         public override string Name => "Song Stats Plugin";
         public override UserControl? PluginControl { get; set; }
-        private Dictionary<string, int>? songStats { get; set; }
+        //private Dictionary<string, int>? songStats { get; set; }
+        private ObservableCollection<KeyValuePair<string, int>> songStats { get; set; }
+
 
         public override void Execute()
         {
@@ -34,7 +41,7 @@ namespace Frootify.PluginSystem
                 string jsontext = File.ReadAllText(jsonfile);
                 if (!String.IsNullOrEmpty(jsontext))
                 {
-                    var jsonStats = JsonSerializer.Deserialize<Dictionary<string, int>>(jsontext);
+                    var jsonStats = JsonSerializer.Deserialize<ObservableCollection<KeyValuePair<string, int>>>(jsontext);
                     songStats = jsonStats;
                 }
             }
@@ -76,7 +83,7 @@ namespace Frootify.PluginSystem
             if (_eventAggregator == null)
                 return;
 
-            songStats = new Dictionary<string, int>();
+            songStats = new ObservableCollection<KeyValuePair<string, int>>();
 
             _eventAggregator.Subscribe<ApplicationShutdownEvent>(HandleShutdownEvent);
             _eventAggregator.Subscribe<SongChangedEvent>(HandleGeneralEvent);
@@ -91,14 +98,21 @@ namespace Frootify.PluginSystem
                 string songTitle = eventparams.CurrentSong.Title;
                 Debug.WriteLine($"SongChangedEvent detected, current song is {eventparams.CurrentSong.Title}");
 
-                if (songStats.ContainsKey(songTitle))
-                    songStats[songTitle]++;
-                else
-                    songStats[songTitle] = 1;
-
                 Application.Current.Dispatcher.Invoke(() =>
                 {
+                    var existingEntry = songStats.FirstOrDefault(x => x.Key == songTitle);
+                    if (existingEntry.Key != null)
+                    {
+                        songStats.Remove(existingEntry);
+                        songStats.Add(new KeyValuePair<string, int>(songTitle, existingEntry.Value + 1));
+                    }
+                    else
+                    {
+                        songStats.Add(new KeyValuePair<string, int>(songTitle, 1));
+                    }
+
                     (PluginControl as SongStatsUserControl)?.UpdateView(songStats);
+
                 });
 
                 WriteStats();

@@ -26,6 +26,68 @@ public class PluginManager
         _plugins.Add(plugin);
     }
 
+    public void DiscoverPlugins(bool clearExisting = false, IEnumerable<IPlugin> inMemoryPlugins = null, string pluginDir = null)
+    {
+        if (clearExisting)
+        {
+            _plugins.Clear();
+        }
+
+        // Load in-memory plugins
+        if (inMemoryPlugins != null)
+        {
+            foreach (var plugin in inMemoryPlugins)
+            {
+                if (!Plugins.Contains(plugin))
+                {
+                    _plugins.Add(plugin);
+                }
+            }
+        }
+
+        // Load plugins from directory
+        if (pluginDir != null && Directory.Exists(pluginDir))
+        {
+            LoadPlugins(pluginDir);
+        }
+
+        // Discover plugins marked with [Plugin] attribute in loaded assemblies
+        DiscoverAttributeMarkedPlugins();
+    }
+
+    private void DiscoverAttributeMarkedPlugins()
+    {
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+        foreach (var assembly in assemblies)
+        {
+            var pluginTypes = assembly.GetTypes()
+                .Where(t => t.GetCustomAttribute<PluginAttribute>() != null)
+                .Where(t => typeof(IPlugin).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+
+            foreach (var type in pluginTypes)
+            {
+                if (Activator.CreateInstance(type) is IPlugin plugin)
+                {
+                    if (!Plugins.Any(p => p.GetType() == type))
+                    {
+                        _plugins.Add(plugin);
+                    }
+                }
+            }
+        }
+    }
+
+    public void UpdatePlugins(MainWindow instance)
+    {
+        foreach (var plugin in Plugins)
+        {
+            // Assuming each plugin has a method to refresh itself, e.g., Reload or Update method
+            // You might need to define an interface method for this purpose
+            // plugin.Reload(); // or plugin.Update();
+        }
+    }
+
     public void LoadPlugins(string directoryPath)
     {
         if (!Directory.Exists(directoryPath))

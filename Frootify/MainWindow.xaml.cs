@@ -213,10 +213,24 @@ namespace Frootify
                 if (!Directory.Exists(pluginDir))
                     Directory.CreateDirectory(pluginDir);
 
-                ExamplePlugin examplePlugin = new ExamplePlugin();
-                pluginLoader._pluginManager.LoadPlugin(examplePlugin);
+                //ExamplePlugin examplePlugin = new ExamplePlugin();
+                //pluginLoader._pluginManager.LoadPlugin(examplePlugin);
 
-                pluginLoader._pluginManager.LoadPlugins(pluginDir);
+                //pluginLoader._pluginManager.LoadPlugins(pluginDir);
+
+                var inMemoryPlugins = new List<IPlugin>
+                {
+                    new ExamplePlugin()
+                };
+
+                pluginLoader._pluginManager.DiscoverPlugins(
+                    clearExisting: true,
+                    inMemoryPlugins: inMemoryPlugins,
+                    pluginDir: pluginDir
+                );
+
+                // pluginLoader._pluginManager.DiscoverPlugins();
+
                 pluginLoader.Start(EventAggregator);
 
             });
