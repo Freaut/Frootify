@@ -76,12 +76,9 @@ namespace Frootify
                         var audioDevicesUserControl = new AudioDevicesUserControl(Devices);
                         audioDevicesUserControl.ApplyButtonClicked += ChangeOutputDevice_Clicked;
                         MainContentControl.Content = audioDevicesUserControl;
-
-                        Debug.WriteLine("Switched content to AudioDevicesUserControl.");
                         break;
                     case "Plugin Settings":
                         MainContentControl.Content = new PluginSettings(instance.pluginLoader._pluginManager.Plugins);
-                        Debug.WriteLine("Switched content to OtherSettingsUserControl.");
                         break;
                         // Add more cases for other tabs here
                 }
