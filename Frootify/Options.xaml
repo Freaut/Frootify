@@ -42,7 +42,7 @@
                  SelectionChanged="MenuListBox_SelectionChanged"
                  SelectedIndex="0">
             <ListBoxItem Content="Audio Devices"/>
-            <ListBoxItem Content="Other Settings"/>
+            <ListBoxItem Content="Plugin Settings"/>
             <!-- Add more menu items here -->
         </ListBox>
 

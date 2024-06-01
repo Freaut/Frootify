@@ -56,7 +56,9 @@ C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\obj\Debug\net7.0-windows\WPFN
 C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\obj\Debug\net7.0-windows\WPFNotification.g.cs
 C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\obj\Debug\net7.0-windows\AudioDevicesUserControl.baml
 C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\obj\Debug\net7.0-windows\Options.baml
-C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\obj\Debug\net7.0-windows\OtherSettingsUserControl.baml
 C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\obj\Debug\net7.0-windows\AudioDevicesUserControl.g.cs
 C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\obj\Debug\net7.0-windows\Options.g.cs
-C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\obj\Debug\net7.0-windows\OtherSettingsUserControl.g.cs
+C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\obj\Debug\net7.0-windows\PluginSettings.baml
+C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\obj\Debug\net7.0-windows\PluginSettings.g.cs
+C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\obj\Debug\net7.0-windows\SongStatsUserControl.baml
+C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\obj\Debug\net7.0-windows\SongStatsUserControl.g.cs

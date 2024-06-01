@@ -22,7 +22,7 @@ namespace Frootify
     public partial class AudioDevicesUserControl : UserControl
     {
         public delegate void ApplyButtonClickedEventHandler(object sender, DevicePair selectedDevice);
-        public event ApplyButtonClickedEventHandler ApplyButtonClicked;
+        public event ApplyButtonClickedEventHandler? ApplyButtonClicked;
 
         public AudioDevicesUserControl(List<DevicePair> devices)
         {

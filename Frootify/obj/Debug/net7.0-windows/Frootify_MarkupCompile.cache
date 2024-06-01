@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET7_0;NETCOREAPP
 C:\Users\thega\Desktop\Yes100\c#\Frootify\Frootify\App.xaml
-6-1360919375
+7242071736
 
-181968623394
+27-1082808670
 228-995550801
-AudioDevicesUserControl.xaml;CreatePlaylistWindow.xaml;MainWindow.xaml;Options.xaml;OtherSettingsUserControl.xaml;WPFNotification.xaml;
+AudioDevicesUserControl.xaml;CreatePlaylistWindow.xaml;MainWindow.xaml;Options.xaml;PluginSettings.xaml;SongStatsUserControl.xaml;WPFNotification.xaml;
 
 False
 

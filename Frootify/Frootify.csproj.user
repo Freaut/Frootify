@@ -16,7 +16,10 @@
     <Compile Update="Options.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="OtherSettingsUserControl.xaml.cs">
+    <Compile Update="PluginSettings.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="SongStatsUserControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="WPFNotification.xaml.cs">
@@ -36,7 +39,10 @@
     <Page Update="Options.xaml">
       <SubType>Designer</SubType>
     </Page>
-    <Page Update="OtherSettingsUserControl.xaml">
+    <Page Update="PluginSettings.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="SongStatsUserControl.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="WPFNotification.xaml">

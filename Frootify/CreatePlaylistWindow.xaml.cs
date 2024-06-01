@@ -5,6 +5,8 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Forms;
 
+#pragma warning disable CS0612
+
 namespace Frootify
 {
     /// <summary>

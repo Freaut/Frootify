@@ -20,8 +20,6 @@ namespace Frootify
         private string _loaded_file_path = string.Empty;
         private string _current_file_path = string.Empty;
         public static event EventHandler<string>? SongFinishedEvent;
-        public static string SelectedSpeaker { get; set; }
-        public static int SelectedSpeakerIndex { get; set; }
         private bool KillThread = false;
         
         public List<DevicePair> Devices { get; set; }
@@ -93,8 +91,6 @@ namespace Frootify
                 outputDevice.Dispose();
                 audioFile?.Dispose();
                 audioFile = null;
-                audioThread.Abort();
-                audioThread.Suspend();
             }
             catch { }
         }

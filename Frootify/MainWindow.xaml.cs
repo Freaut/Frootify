@@ -12,6 +12,7 @@ using System.Drawing;
 using System.Windows.Media;
 using System.Linq;
 using MySql.Data.MySqlClient;
+using Frootify.PluginSystem;
 
 namespace Frootify
 {
@@ -22,6 +23,11 @@ namespace Frootify
 
     public partial class MainWindow : Window
     {
+        // Add equalizer (smart equalizing?)
+        // Modify bass
+        // Change sound quality
+        // Option to favorite songs, as well as a favorites playlist
+        // Song stats - Times played, most played songs, etc
 
         #region Enums
 
@@ -77,6 +83,10 @@ namespace Frootify
         private Playlist? _clickedPlaylist;
         private Song? _clickedSong;
 
+        private EventAggregator? EventAggregator { get; set; }
+        private Thread _eventThread;
+        public PluginLoader pluginLoader { get; set; }
+
         #endregion
 
         public MainWindow()
@@ -89,15 +99,15 @@ namespace Frootify
             MenuItem addSongsMenuItem = new MenuItem { Header = "Add Songs" };
             MenuItem deletePlaylistMenuItem = new MenuItem { Header = "Delete Playlist" };
 
-            MenuItem changeOutputDevice = new MenuItem { Header = "Configure Output Device" };
+            MenuItem settingsMenu = new MenuItem { Header = "Settings" };
 
             addSongsMenuItem.Click += MenuItem_AddSongs_Click;
             deletePlaylistMenuItem.Click += MenuItem_DeletePlaylist_Click;
-            changeOutputDevice.Click += ConfigureOutputDevice_Click;
+            settingsMenu.Click += OpenOptions_Click;
 
             contextMenu.Items.Add(addSongsMenuItem);
             contextMenu.Items.Add(deletePlaylistMenuItem);
-            contextMenu.Items.Add(changeOutputDevice);
+            contextMenu.Items.Add(settingsMenu);
             PlaylistListBox.ContextMenu = contextMenu;
             PlaylistListBox.PreviewMouseRightButtonDown += PlaylistListBox_PreviewMouseRightButtonDown;
 
@@ -171,6 +181,8 @@ namespace Frootify
 
             #endregion
 
+            #region Attempting SQL Connection
+
             try
             {
                 using (MySqlConnection connection = new MySqlConnection(_connectionString))
@@ -185,15 +197,52 @@ namespace Frootify
 
             }
 
+            #endregion
+
             LoadPlaylists();
+
+            #region Plugin Thread
+
+            _eventThread = new Thread(() =>
+            {
+                EventAggregator = new EventAggregator();
+                pluginLoader = new PluginLoader(EventAggregator);
+
+                string? pluginDir = Directory.GetParent(Environment.CurrentDirectory)?.Parent?.Parent?.FullName + "/Plugins/";
+
+                if (!Directory.Exists(pluginDir))
+                    Directory.CreateDirectory(pluginDir);
+
+                ExamplePlugin examplePlugin = new ExamplePlugin();
+                pluginLoader._pluginManager.LoadPlugin(examplePlugin);
+
+                pluginLoader._pluginManager.LoadPlugins(pluginDir);
+                pluginLoader.Start(EventAggregator);
+
+            });
+            _eventThread.Start();
+
+            #endregion
         }
+
+        #region Notifications
 
         private void ShowNotification(Notification notification)
         {
-            WPFNotification notificationWindow = new WPFNotification(notification, this);
-            notificationWindow.Owner = this;
-            notificationWindow.Show();
+            new Thread(() =>
+            {
+                EventAggregator?.Publish(new NotificationPopupEvent());
+            }).Start();
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                WPFNotification notificationWindow = new WPFNotification(notification, this);
+                notificationWindow.Owner = this;
+                notificationWindow.Show();
+            });
         }
+
+        #endregion
 
         #region Update Loop
 
@@ -249,6 +298,8 @@ namespace Frootify
             return null;
         }
 
+        #region Previews
+
         private void PlaylistListBox_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
             clickedListBoxItem = FindAncestor<ListBoxItem>((DependencyObject)e.OriginalSource);
@@ -284,7 +335,21 @@ namespace Frootify
             }
         }
 
+        private void ListBoxSongItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _lastClickedButton_Song = MouseButton.Left;
+        }
+
+        private void ListBoxSongItem_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _lastClickedButton_Song = MouseButton.Right;
+        }
+
         #endregion
+
+        #endregion
+
+        #region Output Device
 
         public void ChangeOutputDevice(DevicePair selectedDevice)
         {
@@ -302,14 +367,16 @@ namespace Frootify
             }
         }
 
-        private void ConfigureOutputDevice_Click(object sender, RoutedEventArgs e)
+        private void OpenOptions_Click(object sender, RoutedEventArgs e)
         {
-            List<DevicePair> devices = _audioPlayer.GetDevices();
-
             Options options = new Options(_audioPlayer, this);
             options.Owner = this;
             options.Show();
         }
+
+        #endregion
+
+        #region Playlist
 
         #region Add Songs To Playlist
 
@@ -350,7 +417,7 @@ namespace Frootify
                 }
 
                 LoadPlaylists();
-                SelectedPlaylist = _playlists.Find(x => x.Id == SelectedPlaylist.Id);
+                SelectedPlaylist = _playlists.Find(x => x.Id == SelectedPlaylist?.Id);
                 UpdateSongsListBox();
             }
         }
@@ -391,19 +458,6 @@ namespace Frootify
 
         #endregion
 
-        #region Queue Song
-
-        private void MenuItem_QueueSong_Click(object sender, RoutedEventArgs e)
-        {
-            if (_clickedSong == null)
-                return;
-
-            _queue.Add(_clickedSong);
-            _clickedSong = null;
-        }
-
-        #endregion
-
         #region Remove Song From Playlist
 
         private void MenuItem_RemoveSong_Click(object sender, RoutedEventArgs e)
@@ -431,7 +485,102 @@ namespace Frootify
 
         #endregion
 
-        #region Song Finsihed
+        #region Playlist Added Event
+
+        private void CreatePlaylist_PlaylistAddedEvent(object? sender, Playlist e)
+        {
+            LoadPlaylists();
+        }
+
+        #endregion
+
+        #region Playlist Previews
+
+        private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _lastClickedButton_Playlists = MouseButton.Left;
+        }
+
+        private void ListBoxItem_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _lastClickedButton_Playlists = MouseButton.Right;
+        }
+
+        #endregion
+
+        #region Load Playlists
+
+        private void LoadPlaylists()
+        {
+            if (USEJSON)
+            {
+                _playlists = JSONHelper.Fetch();
+            }
+            else
+            {
+                try
+                {
+                    _playlists = SQL.Fetch();
+                }
+                catch
+                {
+                    _playlists = JSONHelper.Fetch();
+                }
+            }
+
+            PlaylistListBox.ItemsSource = _playlists;
+        }
+
+        #endregion
+
+        #region Selection Changed Event
+
+        private void Playlist_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_lastClickedButton_Playlists != MouseButton.Left)
+                return;
+
+            Playlist? selectedPlaylist = PlaylistListBox.SelectedItem as Playlist;
+
+            if (selectedPlaylist == null)
+                return;
+
+            SelectedPlaylist = selectedPlaylist;
+            PlaylistName.Text = selectedPlaylist.Name;
+
+            UpdateSongsListBox();
+        }
+
+        #endregion
+
+        #region Create Playlist
+
+        private void CreatePlaylist_Click(object sender, RoutedEventArgs e)
+        {
+            CreatePlaylistWindow createPlaylistWindow = new CreatePlaylistWindow();
+            createPlaylistWindow.ShowDialog();
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Song related
+
+        #region Queue Song
+
+        private void MenuItem_QueueSong_Click(object sender, RoutedEventArgs e)
+        {
+            if (_clickedSong == null)
+                return;
+
+            _queue.Add(_clickedSong);
+            _clickedSong = null;
+        }
+
+        #endregion
+
+        #region Song Finished & Selecting Next Songs
 
         private void AudioPlayer_SongFinishedEvent(object? sender, string e)
         {
@@ -467,6 +616,9 @@ namespace Frootify
                 else
                 {
                     SelectedSong = _queue.FirstOrDefault();
+                    if (SelectedSong == null)
+                        return;
+
                     PlaySelectedSong(SelectedSong.Directory, true);
                     _queue.RemoveAt(0);
                     return;
@@ -517,10 +669,20 @@ namespace Frootify
 
         #endregion
 
+        #region Restarting Song
+
         private void RestartSong()
         {
+            new Thread(() =>
+            {
+                EventAggregator?.Publish(new SongChangedEvent(SelectedSong));
+            }).Start();
+
             _songTime = TimeSpan.FromSeconds(0);
             _audioPlayer.Skip(0);
+
+            if (SelectedSong == null)
+                return;
 
             ShowNotification(new Notification
             {
@@ -529,6 +691,8 @@ namespace Frootify
                 Image = _playlists.First()._imgpath
             });
         }
+
+        #endregion
 
         #region Skipping songs
 
@@ -578,7 +742,7 @@ namespace Frootify
 
         #endregion
 
-        #region PlayPause Button
+        #region PlayPause
 
         public void PlayPause()
         {
@@ -615,91 +779,59 @@ namespace Frootify
 
         #endregion
 
-        #region Loading & Selecting Playlists
+        #region Play Selected Song
 
-        private void CreatePlaylist_PlaylistAddedEvent(object? sender, Playlist e)
+        public void PlaySelectedSong(string filePath, bool click = false)
         {
-            LoadPlaylists();
-        }
-
-        #region Playlist Helpers
-
-        private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            _lastClickedButton_Playlists = MouseButton.Left;
-        }
-
-        private void ListBoxItem_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            _lastClickedButton_Playlists = MouseButton.Right;
-        }
-
-        #endregion
-
-        #region Load
-
-        private void LoadPlaylists()
-        {
-            if (USEJSON)
-            {
-                _playlists = JSONHelper.Fetch();
-            }
-            else
-            {
-                try
-                {
-                    _playlists = SQL.Fetch();
-                }
-                catch
-                {
-                    _playlists = JSONHelper.Fetch();
-                }
-            }
-
-            PlaylistListBox.ItemsSource = _playlists;
-        }
-
-        #endregion
-
-        #region Selection Changed Event
-
-        private void Playlist_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_lastClickedButton_Playlists != MouseButton.Left)
+            if (string.IsNullOrEmpty(filePath))
                 return;
 
-            Playlist? selectedPlaylist = PlaylistListBox.SelectedItem as Playlist;
+            if (click)
+            {
+                // Debug.WriteLine("Click");
+                _audioPlayer.Play(filePath);
+                _songTime = TimeSpan.Zero;
 
-            if (selectedPlaylist == null)
+                new Thread(() =>
+                {
+                    EventAggregator?.Publish(new SongChangedEvent(SelectedSong));
+                }).Start();
+
+                if (SelectedSong != null)
+                {
+                    ShowNotification(new Notification
+                    {
+                        Title = "Now Playing",
+                        Message = $"{SelectedSong.Title} - {SelectedSong.Artist}",
+                        Image = _playlists.First()._imgpath
+                    });
+                }
+
+                return;
+            }
+        }
+
+        #endregion
+
+        #region Song Time Event
+
+        private void ProgressSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_isChangedByProgram)
                 return;
 
-            SelectedPlaylist = selectedPlaylist;
-            PlaylistName.Text = selectedPlaylist.Name;
-
-            UpdateSongsListBox();
+            if (_audioPlayer != null && SelectedSong != null)
+            {
+                int timeStamp = Convert.ToInt32(ProgressSlider.Value);
+                double newPosition = (timeStamp / 100.0) * SelectedSong.Duration.TotalSeconds;
+                _songTime = TimeSpan.FromSeconds(newPosition);
+                _audioPlayer.Skip(newPosition);
+            }
         }
 
         #endregion
 
-        #endregion
-
-        #region Songs
-
-        #region Listbox Helpers
-
-        private void ListBoxSongItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            _lastClickedButton_Song = MouseButton.Left;
-        }
-
-        private void ListBoxSongItem_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            _lastClickedButton_Song = MouseButton.Right;
-        }
-
-        #endregion
-
-        #region Selection Changed Event
+        #region Song Selection Changed Event
 
         private void Song_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -740,55 +872,6 @@ namespace Frootify
 
         #endregion
 
-        #region Song Time Event
-
-        private void ProgressSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (_isChangedByProgram)
-                return;
-
-            if (_audioPlayer != null && SelectedSong != null)
-            {
-                int timeStamp = Convert.ToInt32(ProgressSlider.Value);
-                double newPosition = (timeStamp / 100.0) * SelectedSong.Duration.TotalSeconds;
-                _songTime = TimeSpan.FromSeconds(newPosition);
-                _audioPlayer.Skip(newPosition);
-            }
-        }
-
-        #endregion
-
-        #region Play Selected Song
-
-        public void PlaySelectedSong(string filePath, bool click = false)
-        {
-            if (string.IsNullOrEmpty(filePath))
-                return;
-
-            if (click)
-            {
-                // Debug.WriteLine("Click");
-                _audioPlayer.Play(filePath);
-                _songTime = TimeSpan.Zero;
-
-                if (SelectedSong != null)
-                {
-                    ShowNotification(new Notification
-                    {
-                        Title = "Now Playing",
-                        Message = $"{SelectedSong.Title} - {SelectedSong.Artist}",
-                        Image = _playlists.First()._imgpath
-                    });
-                }
-
-                return;
-            }
-        }
-
-        #endregion
-
-        #endregion
-
         #region Changing Volume
 
         private void Volume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -803,14 +886,6 @@ namespace Frootify
         }
 
         #endregion
-
-        #region Create Playlist
-
-        private void CreatePlaylist_Click(object sender, RoutedEventArgs e)
-        {
-            CreatePlaylistWindow createPlaylistWindow = new CreatePlaylistWindow();
-            createPlaylistWindow.ShowDialog();
-        }
 
         #endregion
 

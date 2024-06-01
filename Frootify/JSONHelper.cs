@@ -38,6 +38,9 @@ namespace Frootify
 
                     var jsonplaylist = JsonSerializer.Deserialize<JSONPlaylist>(jsontext, options);
 
+                    if (jsonplaylist == null)
+                        continue;
+
                     temp.Add(
                         new Playlist(
                             jsonplaylist.Id,
